@@ -1,7 +1,19 @@
 {
-  "apiKey": "PASTE_YOUR_KEY_HERE",
+  "apiKey": "AIzaSyC4r0pO2Tu2_gPEiNgmBoeeGImCyLpbDRU",
   "hideShorts": true,
-  "maxPerChannel": 12,
-  "theme": "midnight",
-  "channels": []
+  "maxPerChannel": 30,
+  "channels": [
+    {
+      "id": "UCvsbkaHXLQY179t-8db8pzw",
+      "title": "Freddie Smith",
+      "thumb": "https://yt3.ggpht.com/1_Y4WbDlrMAw8-17DSlwMYRGGdc09f0LYqUQCq48KnHuwAZajby8p5-mwwdMLY1-Of5m-Pg3-Q=s88-c-k-c0x00ffffff-no-rj",
+      "uploads": "UUvsbkaHXLQY179t-8db8pzw"
+    },
+    {
+      "id": "UCLKZ20yD2tNMBOkSDZo4FeQ",
+      "title": "Shane Hummus",
+      "thumb": "https://yt3.ggpht.com/Tg3J3l38zTlpSMmFXlEvOThBPyiRo1ipdxRs33bwaihXHrGHFD9tCPiUKR9IZFTh1i323DN5=s88-c-k-c0x00ffffff-no-rj",
+      "uploads": "UULKZ20yD2tNMBOkSDZo4FeQ"
+    }
+  ]
 }
