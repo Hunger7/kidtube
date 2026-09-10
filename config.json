@@ -1,6 +1,13 @@
 {
-  "apiKey": "PASTE_YOUR_KEY_HERE",
+  "apiKey": "AIzaSyC4r0pO2Tu2_gPEiNgmBoeeGImCyLpbDRU",
   "hideShorts": true,
   "maxPerChannel": 12,
-  "channels": []
+  "channels": [
+    {
+      "id": "UClFSU9_bUb4Rc6OYfTt5SPw",
+      "title": "Philip DeFranco",
+      "thumb": "https://yt3.ggpht.com/EVLSNMtuPc2KUy44v0kWydLd-Chv8D_CpyvyB6g4Ol8HM-51jxEzUCNo1oj9RtMmB5cC0fw6pQ=s88-c-k-c0x00ffffff-no-rj",
+      "uploads": "UUlFSU9_bUb4Rc6OYfTt5SPw"
+    }
+  ]
 }
