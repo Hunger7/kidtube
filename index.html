@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Shelf</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#141821">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ground:#141821;
+  --raised:#1B2028;
+  --hairline:#2B3240;
+  --paper:#ECE7DE;
+  --muted:#8C93A1;
+  --brass:#C08A3E;
+  --warn:#B4573F;
+  --r:10px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;background:var(--ground);color:var(--paper)}
+body{
+  font-family:Archivo,"Helvetica Neue",Arial,sans-serif;
+  font-size:16px;line-height:1.45;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  overscroll-behavior-y:contain;
+}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ---------- header ---------- */
+header{
+  position:sticky;top:0;z-index:20;background:var(--ground);
+  padding:18px 18px 0;
+}
+.bar{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+h1{margin:0;font-size:27px;font-weight:700;letter-spacing:-.02em}
+.sub{margin:2px 0 0;font-size:13px;color:var(--muted)}
+.hbtns{display:flex;gap:4px;align-items:center}
+.iconbtn{
+  width:42px;height:42px;border-radius:var(--r);display:grid;place-items:center;
+  color:var(--muted);
+}
+.iconbtn:active{background:var(--raised)}
+.iconbtn svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.spin{animation:sp 1s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* ---------- channel rail ---------- */
+.rail{
+  display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;
+  padding:14px 18px 14px;margin:0 -18px;
+}
+.rail::-webkit-scrollbar{display:none}
+.chip{
+  flex:0 0 auto;display:flex;align-items:center;gap:8px;
+  padding:7px 14px 7px 7px;border-radius:999px;
+  background:var(--raised);border:1px solid var(--hairline);
+  font-size:14px;font-weight:500;color:var(--muted);white-space:nowrap;
+}
+.chip.text-only{padding:7px 16px}
+.chip img{width:26px;height:26px;border-radius:50%;object-fit:cover}
+.chip[aria-pressed="true"]{color:var(--ground);background:var(--paper);border-color:var(--paper)}
+
+/* ---------- feed ---------- */
+main{padding:0 18px 40px}
+.card{display:block;width:100%;text-align:left;padding:0;margin:0 0 26px}
+.thumb{
+  position:relative;width:100%;aspect-ratio:16/9;border-radius:var(--r);
+  overflow:hidden;background:var(--raised);
+}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.dur{
+  position:absolute;right:8px;bottom:8px;
+  background:rgba(10,12,16,.85);color:var(--paper);
+  font-size:12px;font-weight:600;font-variant-numeric:tabular-nums;
+  padding:2px 6px;border-radius:5px;
+}
+.card h2{margin:11px 0 3px;font-size:16px;font-weight:600;line-height:1.32;letter-spacing:-.01em}
+.meta{margin:0;font-size:13px;color:var(--muted)}
+
+/* ---------- player ---------- */
+#player-view{
+  position:fixed;inset:0;z-index:60;background:var(--ground);
+  display:none;flex-direction:column;
+}
+#player-view.on{display:flex}
+.stage{width:100%;aspect-ratio:16/9;background:#000;flex:0 0 auto}
+.stage iframe{width:100%;height:100%;border:0;display:block}
+.nowplaying{flex:1 1 auto;overflow-y:auto;padding:18px}
+.nowplaying h2{margin:0 0 5px;font-size:18px;font-weight:600;line-height:1.3}
+.backbar{
+  flex:0 0 auto;padding:12px 18px calc(14px + env(safe-area-inset-bottom));
+  border-top:1px solid var(--hairline);background:var(--ground);
+}
+.wide{
+  display:block;width:100%;padding:15px;border-radius:var(--r);
+  background:var(--paper);color:var(--ground);font-weight:600;font-size:16px;text-align:center;
+}
+.wide.ghost{background:none;color:var(--paper);border:1px solid var(--hairline)}
+.wide.danger{background:none;color:var(--warn);border:1px solid var(--hairline)}
+
+/* ---------- settings ---------- */
+#setup{
+  position:fixed;inset:0;z-index:70;background:var(--ground);
+  display:none;overflow-y:auto;padding:22px 18px calc(30px + env(safe-area-inset-bottom));
+}
+#setup.on{display:block}
+#setup h2{font-size:23px;margin:0 0 6px;letter-spacing:-.02em}
+#setup p.lede{color:var(--muted);font-size:14px;margin:0 0 26px;max-width:60ch}
+fieldset{border:0;padding:0;margin:0 0 26px}
+legend{font-size:15px;font-weight:600;padding:0;margin-bottom:8px}
+.hint{font-size:13px;color:var(--muted);margin:0 0 10px;max-width:60ch}
+.hint a{color:var(--brass)}
+input[type=text]{
+  width:100%;padding:13px 14px;border-radius:var(--r);
+  background:var(--raised);border:1px solid var(--hairline);color:var(--paper);
+  font-family:inherit;font-size:16px;
+}
+input::placeholder{color:#5D6577}
+.row{display:flex;gap:8px}
+.row input{flex:1 1 auto;min-width:0}
+.row button{
+  flex:0 0 auto;padding:0 18px;border-radius:var(--r);
+  background:var(--paper);color:var(--ground);font-weight:600;
+}
+.row button:disabled{opacity:.45}
+ul.chans{list-style:none;padding:0;margin:14px 0 0}
+ul.chans li{
+  display:flex;align-items:center;gap:11px;padding:9px 0;
+  border-top:1px solid var(--hairline);
+}
+ul.chans li img{width:36px;height:36px;border-radius:50%;flex:0 0 auto}
+ul.chans li span{flex:1 1 auto;font-size:15px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ul.chans li button{color:var(--muted);font-size:14px;padding:6px 8px}
+.toggle{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 0}
+.toggle span{font-size:15px}
+.switch{
+  width:50px;height:29px;border-radius:999px;background:var(--hairline);
+  position:relative;flex:0 0 auto;transition:background .15s;
+}
+.switch::after{
+  content:"";position:absolute;top:3px;left:3px;width:23px;height:23px;
+  border-radius:50%;background:var(--paper);transition:transform .15s;
+}
+.switch[aria-pressed="true"]{background:var(--brass)}
+.switch[aria-pressed="true"]::after{transform:translateX(21px)}
+.note{font-size:13px;color:var(--muted);margin:22px 0 0;max-width:60ch}
+.err{color:var(--warn);font-size:14px;margin:10px 0 0;min-height:1.2em}
+
+/* ---------- states ---------- */
+.state{padding:70px 4px;text-align:center;color:var(--muted)}
+.state h2{color:var(--paper);font-size:19px;margin:0 0 8px;font-weight:600}
+.state p{margin:0 auto 20px;font-size:14px;max-width:34ch}
+.state .wide{max-width:280px;margin:0 auto}
+.skel{background:var(--raised);border-radius:var(--r);margin-bottom:26px}
+.skel.t{aspect-ratio:16/9}
+.skel.l{height:15px;width:82%;margin:11px 0 7px}
+.skel.s{height:12px;width:45%}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="bar">
+    <div>
+      <h1>Shelf</h1>
+      <p class="sub" id="sub">Loading</p>
+    </div>
+    <div class="hbtns">
+      <button class="iconbtn" id="refresh" aria-label="Refresh videos">
+        <svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-.6 3M20 4v7h-7"/></svg>
+      </button>
+      <button class="iconbtn" id="open-setup" aria-label="Channels and settings">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.9 1.2v.2a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-2.9-1.2l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0-1.2-2.9H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.2-2.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3 1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 2.9 1.2l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0 1.2 2.9h.2a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+      </button>
+    </div>
+  </div>
+  <div class="rail" id="rail"></div>
+</header>
+
+<main id="feed"></main>
+
+<div id="player-view">
+  <div class="stage"><div id="yt"></div></div>
+  <div class="nowplaying">
+    <h2 id="np-title"></h2>
+    <p class="meta" id="np-meta"></p>
+  </div>
+  <div class="backbar"><button class="wide" id="close-player">Back to list</button></div>
+</div>
+
+<div id="setup">
+  <h2>Channels and settings</h2>
+  <p class="lede">Only the channels listed here can be watched. Nothing else on YouTube is reachable from this app.</p>
+
+  <fieldset>
+    <legend>YouTube API key</legend>
+    <p class="hint">Create one free at <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener">Google Cloud Console</a> with the YouTube Data API v3 enabled. It is only used to look up video lists.</p>
+    <input type="text" id="key" placeholder="AIza…" autocomplete="off" autocapitalize="off" spellcheck="false">
+  </fieldset>
+
+  <fieldset>
+    <legend>Approved channels</legend>
+    <p class="hint">Paste a channel handle, URL, or ID. For example @veritasium.</p>
+    <div class="row">
+      <input type="text" id="chan-in" placeholder="@handle or channel URL" autocomplete="off" autocapitalize="off" spellcheck="false">
+      <button id="add-chan">Add</button>
+    </div>
+    <p class="err" id="chan-err"></p>
+    <ul class="chans" id="chan-list"></ul>
+  </fieldset>
+
+  <fieldset>
+    <legend>Playback</legend>
+    <div class="toggle">
+      <span>Hide Shorts</span>
+      <button class="switch" id="t-shorts" aria-pressed="true" aria-label="Hide Shorts"></button>
+    </div>
+    <div class="toggle">
+      <span>Return to list when a video ends</span>
+      <button class="switch" id="t-autoback" aria-pressed="true" aria-label="Return to list when a video ends"></button>
+    </div>
+  </fieldset>
+
+  <button class="wide" id="save-setup">Save and reload</button>
+  <p class="note">Signed-in ad-free playback comes from Chrome's own YouTube session, so keep third-party cookies allowed for youtube.com.</p>
+  <button class="wide danger" id="wipe" style="margin-top:26px">Erase all settings</button>
+</div>
+
+<script>
+/* ---------------- storage ---------------- */
+const mem = {};
+const store = {
+  get(k){ try { return localStorage.getItem(k); } catch(e){ return mem[k] ?? null; } },
+  set(k,v){ try { localStorage.setItem(k,v); } catch(e){ mem[k]=v; } },
+  del(k){ try { localStorage.removeItem(k); } catch(e){ delete mem[k]; } }
+};
+const DEFAULTS = { apiKey:"", channels:[], hideShorts:true, autoBack:true };
+let cfg = Object.assign({}, DEFAULTS, JSON.parse(store.get("shelf.cfg") || "{}"));
+const saveCfg = () => store.set("shelf.cfg", JSON.stringify(cfg));
+
+let videos = [];
+let filter = "all";
+
+/* ---------------- api ---------------- */
+const API = "https://www.googleapis.com/youtube/v3/";
+async function yt(path, params){
+  const q = new URLSearchParams(Object.assign({key:cfg.apiKey}, params));
+  const r = await fetch(API + path + "?" + q);
+  const j = await r.json();
+  if (!r.ok) throw new Error(j?.error?.message || "Request failed (" + r.status + ")");
+  return j;
+}
+
+function parseChannelInput(raw){
+  const s = raw.trim().replace(/^(?:https?:\/\/)?(?:www\.|m\.)?youtube\.com/i, "");
+  let m;
+  if ((m = s.match(/^\/?channel\/(UC[\w-]{22})/i))) return {id:m[1]};
+  if (/^UC[\w-]{22}$/.test(s)) return {id:s};
+  if ((m = s.match(/^\/?@([\w.\-]+)/))) return {handle:"@"+m[1]};
+  if ((m = s.match(/^\/?(?:c|user)\/([\w.\-]+)/i))) return {username:m[1]};
+  if (/^[\w.\-]+$/.test(s)) return {handle:"@"+s};
+  return null;
+}
+
+async function lookupChannel(raw){
+  const p = parseChannelInput(raw);
+  if (!p) throw new Error("That doesn't look like a channel handle, URL, or ID.");
+  const base = {part:"snippet,contentDetails"};
+  let res;
+  if (p.id) res = await yt("channels", Object.assign(base,{id:p.id}));
+  else if (p.handle) res = await yt("channels", Object.assign(base,{forHandle:p.handle}));
+  else res = await yt("channels", Object.assign(base,{forUsername:p.username}));
+  const c = res.items && res.items[0];
+  if (!c) throw new Error("No channel found. Try the @handle exactly as it appears on the channel page.");
+  return {
+    id: c.id,
+    title: c.snippet.title,
+    thumb: (c.snippet.thumbnails.default || {}).url || "",
+    uploads: c.contentDetails.relatedPlaylists.uploads
+  };
+}
+
+async function fetchFeed(){
+  if (!cfg.apiKey || !cfg.channels.length) return [];
+  const per = cfg.channels.length > 8 ? 6 : 12;
+  const batches = await Promise.all(cfg.channels.map(async ch => {
+    try {
+      const r = await yt("playlistItems", {part:"snippet,contentDetails", playlistId:ch.uploads, maxResults:per});
+      return (r.items||[]).map(it => ({
+        vid: it.contentDetails.videoId,
+        title: it.snippet.title,
+        channelId: ch.id,
+        channelTitle: ch.title,
+        published: it.contentDetails.videoPublishedAt || it.snippet.publishedAt,
+        thumb: (it.snippet.thumbnails.medium || it.snippet.thumbnails.default || {}).url || "",
+        seconds: null
+      }));
+    } catch(e){ return []; }
+  }));
+  let all = batches.flat().filter(v => v.vid);
+  all.sort((a,b) => new Date(b.published) - new Date(a.published));
+  all = all.slice(0, 90);
+  await addDurations(all);
+  if (cfg.hideShorts) all = all.filter(v => v.seconds === null || v.seconds > 65);
+  return all;
+}
+
+async function addDurations(list){
+  for (let i = 0; i < list.length; i += 50){
+    const slice = list.slice(i, i+50);
+    try {
+      const r = await yt("videos", {part:"contentDetails", id:slice.map(v=>v.vid).join(",")});
+      const map = {};
+      (r.items||[]).forEach(it => map[it.id] = iso8601(it.contentDetails.duration));
+      slice.forEach(v => { if (map[v.vid] != null) v.seconds = map[v.vid]; });
+    } catch(e){ /* durations are a nicety, not a blocker */ }
+  }
+}
+
+function iso8601(d){
+  const m = /P(?:(\d+)D)?T?(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/.exec(d || "");
+  if (!m) return null;
+  return (+m[1]||0)*86400 + (+m[2]||0)*3600 + (+m[3]||0)*60 + (+m[4]||0);
+}
+
+/* ---------------- formatting ---------------- */
+function clock(s){
+  if (s == null) return "";
+  const h = Math.floor(s/3600), m = Math.floor(s%3600/60), sec = s%60;
+  return h ? `${h}:${String(m).padStart(2,"0")}:${String(sec).padStart(2,"0")}`
+           : `${m}:${String(sec).padStart(2,"0")}`;
+}
+function ago(iso){
+  const d = Math.floor((Date.now() - new Date(iso)) / 1000);
+  if (d < 3600) return Math.max(1, Math.floor(d/60)) + " min ago";
+  if (d < 86400) return Math.floor(d/3600) + " hr ago";
+  if (d < 2592000) { const n = Math.floor(d/86400); return n + (n===1?" day ago":" days ago"); }
+  if (d < 31536000) { const n = Math.floor(d/2592000); return n + (n===1?" month ago":" months ago"); }
+  const n = Math.floor(d/31536000); return n + (n===1?" year ago":" years ago");
+}
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+/* ---------------- render ---------------- */
+const $ = id => document.getElementById(id);
+const feedEl = $("feed"), railEl = $("rail"), subEl = $("sub");
+
+function renderRail(){
+  if (!cfg.channels.length){ railEl.innerHTML = ""; return; }
+  const chip = (id, label, thumb) =>
+    `<button class="chip${thumb?"":" text-only"}" data-ch="${esc(id)}" aria-pressed="${filter===id}">` +
+    (thumb ? `<img src="${esc(thumb)}" alt="">` : "") + esc(label) + `</button>`;
+  railEl.innerHTML = chip("all","Everything","") +
+    cfg.channels.map(c => chip(c.id, c.title, c.thumb)).join("");
+  railEl.querySelectorAll("[data-ch]").forEach(b => b.onclick = () => {
+    filter = b.dataset.ch; renderRail(); renderFeed();
+  });
+}
+
+function renderFeed(){
+  if (!cfg.apiKey || !cfg.channels.length){
+    feedEl.innerHTML = `<div class="state">
+      <h2>Nothing on the shelf yet</h2>
+      <p>Add an API key and the channels you want available.</p>
+      <button class="wide" id="empty-setup">Set up channels</button></div>`;
+    $("empty-setup").onclick = openSetup;
+    subEl.textContent = "Not set up";
+    return;
+  }
+  const list = filter === "all" ? videos : videos.filter(v => v.channelId === filter);
+  if (!list.length){
+    feedEl.innerHTML = `<div class="state"><h2>No videos here</h2>
+      <p>Nothing recent from this channel, or the list hasn't refreshed yet.</p></div>`;
+    return;
+  }
+  feedEl.innerHTML = list.map((v,i) => `
+    <button class="card" data-i="${i}">
+      <div class="thumb"><img src="${esc(v.thumb)}" alt="" loading="lazy">
+        ${v.seconds ? `<span class="dur">${clock(v.seconds)}</span>` : ""}</div>
+      <h2>${esc(v.title)}</h2>
+      <p class="meta">${esc(v.channelTitle)} · ${ago(v.published)}</p>
+    </button>`).join("");
+  feedEl.querySelectorAll(".card").forEach(b => b.onclick = () => play(list[+b.dataset.i]));
+}
+
+function skeleton(){
+  feedEl.innerHTML = Array(4).fill(
+    `<div><div class="skel t"></div><div class="skel l"></div><div class="skel s"></div></div>`).join("");
+}
+
+/* ---------------- player ---------------- */
+let player = null, apiReady = false, pending = null;
+window.onYouTubeIframeAPIReady = () => { apiReady = true; if (pending){ const v = pending; pending = null; play(v); } };
+(function(){ const s = document.createElement("script"); s.src = "https://www.youtube.com/iframe_api"; document.head.appendChild(s); })();
+
+function play(v){
+  $("np-title").textContent = v.title;
+  $("np-meta").textContent = v.channelTitle + " · " + ago(v.published);
+  $("player-view").classList.add("on");
+  document.body.style.overflow = "hidden";
+  pushOverlay();
+  if (!apiReady){ pending = v; return; }
+  const opts = {
+    videoId: v.vid,
+    host: "https://www.youtube.com",
+    playerVars: { rel:0, modestbranding:1, playsinline:1, iv_load_policy:3, autoplay:1 },
+    events: { onStateChange: e => {
+      if (e.data === YT.PlayerState.ENDED && cfg.autoBack) closePlayer();
+    }}
+  };
+  if (player && player.loadVideoById){ player.loadVideoById(v.vid); }
+  else { player = new YT.Player("yt", opts); }
+}
+function pushOverlay(){
+  if (!(history.state && history.state.overlay)) history.pushState({overlay:true}, "");
+}
+function popOverlay(fromBack){
+  if (!fromBack && history.state && history.state.overlay) history.back();
+}
+function closePlayer(fromBack){
+  if (player && player.stopVideo) player.stopVideo();
+  pending = null;
+  $("player-view").classList.remove("on");
+  document.body.style.overflow = "";
+  popOverlay(fromBack);
+}
+$("close-player").onclick = () => closePlayer(false);
+window.addEventListener("popstate", () => {
+  if ($("player-view").classList.contains("on")) closePlayer(true);
+  else if ($("setup").classList.contains("on")) closeSetup(true);
+});
+
+/* ---------------- settings ---------------- */
+let draft = [];
+function openSetup(){
+  draft = cfg.channels.slice();
+  $("key").value = cfg.apiKey;
+  $("t-shorts").setAttribute("aria-pressed", String(cfg.hideShorts));
+  $("t-autoback").setAttribute("aria-pressed", String(cfg.autoBack));
+  renderDraft();
+  $("setup").classList.add("on");
+  document.body.style.overflow = "hidden";
+  pushOverlay();
+}
+function closeSetup(fromBack){
+  $("setup").classList.remove("on");
+  document.body.style.overflow = "";
+  popOverlay(fromBack);
+}
+$("open-setup").onclick = openSetup;
+
+function renderDraft(){
+  $("chan-list").innerHTML = draft.map((c,i) => `<li>
+    <img src="${esc(c.thumb)}" alt=""><span>${esc(c.title)}</span>
+    <button data-rm="${i}">Remove</button></li>`).join("");
+  $("chan-list").querySelectorAll("[data-rm]").forEach(b => b.onclick = () => {
+    draft.splice(+b.dataset.rm, 1); renderDraft();
+  });
+}
+
+$("add-chan").onclick = async () => {
+  const input = $("chan-in"), btn = $("add-chan"), err = $("chan-err");
+  const raw = input.value.trim();
+  err.textContent = "";
+  if (!raw) return;
+  const key = $("key").value.trim();
+  if (!key){ err.textContent = "Add your API key first."; return; }
+  cfg.apiKey = key;
+  btn.disabled = true; btn.textContent = "…";
+  try {
+    const c = await lookupChannel(raw);
+    if (draft.some(d => d.id === c.id)) err.textContent = c.title + " is already on the list.";
+    else { draft.push(c); input.value = ""; renderDraft(); }
+  } catch(e){ err.textContent = e.message; }
+  btn.disabled = false; btn.textContent = "Add";
+};
+$("chan-in").addEventListener("keydown", e => { if (e.key === "Enter") $("add-chan").click(); });
+
+document.querySelectorAll(".switch").forEach(sw => sw.onclick = () => {
+  sw.setAttribute("aria-pressed", sw.getAttribute("aria-pressed") === "true" ? "false" : "true");
+});
+
+$("save-setup").onclick = () => {
+  cfg.apiKey = $("key").value.trim();
+  cfg.channels = draft.slice();
+  cfg.hideShorts = $("t-shorts").getAttribute("aria-pressed") === "true";
+  cfg.autoBack = $("t-autoback").getAttribute("aria-pressed") === "true";
+  saveCfg();
+  store.del("shelf.feed");
+  closeSetup();
+  load(true);
+};
+
+$("wipe").onclick = () => {
+  if (!confirm("Erase the API key, channel list, and settings on this device?")) return;
+  store.del("shelf.cfg"); store.del("shelf.feed");
+  cfg = Object.assign({}, DEFAULTS);
+  draft = []; closeSetup(); renderRail(); renderFeed();
+};
+
+/* ---------------- load ---------------- */
+async function load(force){
+  if (!cfg.apiKey || !cfg.channels.length){ renderRail(); renderFeed(); return; }
+  const cached = JSON.parse(store.get("shelf.feed") || "null");
+  const fresh = cached && (Date.now() - cached.ts < 30*60*1000);
+  if (cached && !force){
+    videos = cached.videos; renderRail(); renderFeed();
+    subEl.textContent = cfg.channels.length + " channels · updated " + ago(new Date(cached.ts).toISOString());
+    if (fresh) return;
+  } else { renderRail(); skeleton(); subEl.textContent = "Checking for new videos"; }
+
+  $("refresh").firstElementChild.classList.add("spin");
+  try {
+    videos = await fetchFeed();
+    store.set("shelf.feed", JSON.stringify({ts:Date.now(), videos}));
+    renderFeed();
+    subEl.textContent = cfg.channels.length + " channels · updated just now";
+  } catch(e){
+    subEl.textContent = "Couldn't refresh";
+    if (!videos.length){
+      feedEl.innerHTML = `<div class="state"><h2>Couldn't load videos</h2>
+        <p>${esc(e.message)}</p>
+        <button class="wide ghost" id="err-setup">Check settings</button></div>`;
+      $("err-setup").onclick = openSetup;
+    }
+  }
+  $("refresh").firstElementChild.classList.remove("spin");
+}
+$("refresh").onclick = () => load(true);
+
+renderRail();
+load(false);
+
+if ("serviceWorker" in navigator){
+  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(()=>{}));
+}
+</script>
+</body>
+</html>
