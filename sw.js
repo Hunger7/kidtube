@@ -1,4 +1,4 @@
-const SHELL = "shelf-shell-v1";
+const SHELL = "shelf-shell-v3";
 const FILES = ["./", "./index.html", "./manifest.webmanifest", "./icon.svg"];
 
 self.addEventListener("install", e => {
@@ -13,10 +13,17 @@ self.addEventListener("activate", e => {
   );
 });
 
-// App shell from cache, everything else (API, thumbnails, player) straight from the network.
 self.addEventListener("fetch", e => {
   const url = new URL(e.request.url);
   if (e.request.method !== "GET" || url.origin !== location.origin) return;
+
+  // config.json and the admin page are never served from cache: a channel list
+  // change has to reach the device on the next load, not eventually.
+  if (url.pathname.endsWith("/config.json") || url.pathname.endsWith("/admin.html")) {
+    e.respondWith(fetch(e.request, {cache:"no-store"}).catch(() => caches.match(e.request)));
+    return;
+  }
+
   e.respondWith(
     caches.match(e.request).then(hit => hit || fetch(e.request).then(res => {
       const copy = res.clone();

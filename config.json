@@ -1,0 +1,6 @@
+{
+  "apiKey": "PASTE_YOUR_KEY_HERE",
+  "hideShorts": true,
+  "maxPerChannel": 12,
+  "channels": []
+}
