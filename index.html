@@ -269,7 +269,7 @@ async function loadConfig(){
   const c = await r.json();
   if (!c.apiKey || c.apiKey === "PASTE_YOUR_KEY_HERE") throw new Error("config.json has no API key yet.");
   if (!Array.isArray(c.channels) || !c.channels.length) throw new Error("config.json has no channels yet.");
-  return Object.assign({hideShorts:true, maxPerChannel:12, theme:"midnight"}, c);
+  return Object.assign({hideShorts:true, maxPerChannel:12, shortsMaxSeconds:180, theme:"midnight"}, c);
 }
 const mem = {};
 const store = {
@@ -325,27 +325,58 @@ async function fetchFeed(){
         channelId: ch.id, channelTitle: ch.title,
         published: it.contentDetails.videoPublishedAt || it.snippet.publishedAt,
         thumb: (it.snippet.thumbnails.medium || it.snippet.thumbnails.default || {}).url || "",
-        seconds: null
+        seconds: null, aspect: null
       }));
     } catch(e){ return []; }
   }));
   let all = batches.flat().filter(v => v.vid);
   all.sort((a,b) => new Date(b.published) - new Date(a.published));
   all = all.slice(0, 90);
-  await addDurations(all);
-  if (cfg.hideShorts) all = all.filter(v => v.seconds === null || v.seconds > 65);
+  await addDetails(all);
+  if (cfg.hideShorts) all = all.filter(v => !isShortVideo(v));
   return all;
 }
-async function addDurations(list){
+
+/* A Short is a vertical (or square) video up to the Shorts ceiling — duration
+   alone stopped being a reliable signal when the limit rose to 3 minutes.
+   If the aspect ratio can't be determined, fall back to duration plus a
+   #shorts tag in the title, which most Shorts carry. */
+function isShortVideo(v){
+  const ceiling = cfg.shortsMaxSeconds;
+  if (v.seconds != null && v.seconds > ceiling) return false;
+  if (v.aspect != null) return v.aspect < 1.05;
+  if (v.seconds != null && v.seconds <= ceiling && /#short/i.test(v.title)) return true;
+  return v.seconds != null && v.seconds <= 65;
+}
+async function addDetails(list){
   for (let i = 0; i < list.length; i += 50){
     const slice = list.slice(i, i+50);
     try {
-      const r = await yt("videos", {part:"contentDetails", id:slice.map(v=>v.vid).join(",")});
+      // maxWidth makes the API size the embed to the video's real aspect ratio,
+      // which is the only place the API exposes portrait vs landscape.
+      const r = await yt("videos", {
+        part:"contentDetails,player", maxWidth:480,
+        id:slice.map(v=>v.vid).join(",")
+      });
       const map = {};
-      (r.items||[]).forEach(it => map[it.id] = iso8601(it.contentDetails.duration));
-      slice.forEach(v => { if (map[v.vid] != null) v.seconds = map[v.vid]; });
+      (r.items||[]).forEach(it => map[it.id] = {
+        seconds: iso8601(it.contentDetails.duration),
+        aspect: embedAspect(it.player && it.player.embedHtml)
+      });
+      slice.forEach(v => {
+        const d = map[v.vid];
+        if (!d) return;
+        if (d.seconds != null) v.seconds = d.seconds;
+        if (d.aspect != null) v.aspect = d.aspect;
+      });
     } catch(e){}
   }
+}
+function embedAspect(html){
+  if (!html) return null;
+  const w = /width="(\d+)"/.exec(html), h = /height="(\d+)"/.exec(html);
+  if (!w || !h || !+h[1]) return null;
+  return +w[1] / +h[1];
 }
 function iso8601(d){
   const m = /P(?:(\d+)D)?T?(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/.exec(d || "");

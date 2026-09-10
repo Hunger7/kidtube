@@ -71,6 +71,17 @@ code{color:var(--brass);font-family:ui-monospace,Menlo,monospace;font-size:13px}
   <div class="toggle"><span>Hide Shorts</span><button class="switch" id="t-shorts" aria-pressed="true" aria-label="Hide Shorts"></button></div>
   <div class="toggle"><span>Videos to pull per channel</span>
     <input type="text" id="per" value="12" style="width:70px;text-align:center" inputmode="numeric"></div>
+  <div class="toggle"><span>Shorts ceiling (seconds)</span>
+    <input type="text" id="smax" value="180" style="width:70px;text-align:center" inputmode="numeric"></div>
+  <p class="hint">A vertical video at or under this length counts as a Short. 180 matches YouTube's current limit; raise it well past any real video length to drop every vertical upload.</p>
+  <div class="toggle"><span>Default theme</span>
+    <select id="theme" style="padding:10px 12px;border-radius:10px;background:var(--raised);border:1px solid var(--hairline);color:var(--paper);font-family:inherit;font-size:15px">
+      <option value="midnight">Midnight</option>
+      <option value="black">Black</option>
+      <option value="white">White</option>
+      <option value="device">Device</option>
+    </select></div>
+  <p class="hint">Only applies to a device that hasn't picked its own.</p>
 </fieldset>
 
 <fieldset>
@@ -92,13 +103,16 @@ let channels = [];
 try { const s = JSON.parse(localStorage.getItem("shelf.admin")||"{}");
   if (s.apiKey) $("key").value = s.apiKey;
   if (s.per) $("per").value = s.per;
+  if (s.smax) $("smax").value = s.smax;
+  if (s.theme) $("theme").value = s.theme;
   if (typeof s.hideShorts === "boolean") $("t-shorts").setAttribute("aria-pressed", String(s.hideShorts));
   channels = s.channels || [];
 } catch(e){}
 
 function persist(){
   try { localStorage.setItem("shelf.admin", JSON.stringify({
-    apiKey:$("key").value.trim(), per:$("per").value,
+    apiKey:$("key").value.trim(), per:$("per").value, smax:$("smax").value,
+    theme:$("theme").value,
     hideShorts:$("t-shorts").getAttribute("aria-pressed")==="true", channels
   })); } catch(e){}
 }
@@ -145,10 +159,13 @@ function render(){
 
 function build(){
   const per = Math.max(1, Math.min(30, parseInt($("per").value,10) || 12));
+  const smax = Math.max(1, parseInt($("smax").value,10) || 180);
   $("out").value = JSON.stringify({
     apiKey: $("key").value.trim() || "PASTE_YOUR_KEY_HERE",
     hideShorts: $("t-shorts").getAttribute("aria-pressed") === "true",
+    shortsMaxSeconds: smax,
     maxPerChannel: per,
+    theme: $("theme").value,
     channels
   }, null, 2);
 }
@@ -173,7 +190,8 @@ $("t-shorts").onclick = () => {
   sw.setAttribute("aria-pressed", sw.getAttribute("aria-pressed") === "true" ? "false" : "true");
   build(); persist();
 };
-["key","per"].forEach(id => $(id).addEventListener("input", () => { build(); persist(); }));
+["key","per","smax"].forEach(id => $(id).addEventListener("input", () => { build(); persist(); }));
+$("theme").addEventListener("change", () => { build(); persist(); });
 
 $("copy").onclick = async () => {
   try { await navigator.clipboard.writeText($("out").value); $("copied").textContent = "Copied."; }
