@@ -1,6 +1,6 @@
 {
-  "name": "Shelf",
-  "short_name": "Shelf",
+  "name": "KidTube - Monty Cross",
+  "short_name": "KidTube",
   "description": "A quiet viewer for a hand-picked set of YouTube channels.",
   "start_url": "./index.html",
   "scope": "./",

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Shelf</title>
+<title>KidTube - Monty Cross</title>
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#0F1113">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
@@ -65,7 +65,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
 header{position:sticky;top:0;z-index:20;background:var(--ground);padding:18px 18px 0}
 .bar{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
-h1{margin:0;font-size:27px;font-weight:700;letter-spacing:-.02em}
+h1{margin:0;font-size:clamp(19px,5.4vw,27px);font-weight:700;letter-spacing:-.02em;line-height:1.15}
 .sub{margin:2px 0 0;font-size:13px;color:var(--muted)}
 .hbtns{display:flex;gap:2px;align-items:center}
 .iconbtn{width:42px;height:42px;border-radius:10px;display:grid;place-items:center;color:var(--muted)}
@@ -202,7 +202,7 @@ input[type=range]::-moz-range-thumb{width:19px;height:19px;border:0;border-radiu
 
 <header>
   <div class="bar">
-    <div><h1>Shelf</h1><p class="sub" id="sub">Loading</p></div>
+    <div><h1 id="app-name">KidTube - Monty Cross</h1><p class="sub" id="sub">Loading</p></div>
     <div class="hbtns">
       <button class="iconbtn" id="theme-btn" aria-label="Appearance">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 0 0 18"/><path d="M12 3v18"/></svg>
@@ -262,6 +262,8 @@ input[type=range]::-moz-range-thumb{width:19px;height:19px;border:0;border-radiu
 
 <script>
 /* ================= config ================= */
+/* Override per instance with "appName" in config.json. */
+const APP_NAME = "KidTube - Monty Cross";
 let cfg = null;
 async function loadConfig(){
   const r = await fetch("config.json?v=" + Date.now(), {cache:"no-store"});
@@ -269,7 +271,7 @@ async function loadConfig(){
   const c = await r.json();
   if (!c.apiKey || c.apiKey === "PASTE_YOUR_KEY_HERE") throw new Error("config.json has no API key yet.");
   if (!Array.isArray(c.channels) || !c.channels.length) throw new Error("config.json has no channels yet.");
-  return Object.assign({hideShorts:true, maxPerChannel:12, shortsMaxSeconds:180, theme:"midnight"}, c);
+  return Object.assign({hideShorts:true, maxPerChannel:12, shortsMaxSeconds:180, theme:"midnight", appName:APP_NAME}, c);
 }
 const mem = {};
 const store = {
@@ -647,6 +649,10 @@ async function load(force){
   try { cfg = await loadConfig(); }
   catch(e){ fatal(e.message); return; }
   if (!store.get("shelf.theme") && cfg.theme) applyTheme(cfg.theme);
+  if (cfg.appName && cfg.appName !== APP_NAME){
+    $("app-name").textContent = cfg.appName;
+    document.title = cfg.appName;
+  }
 
   const cached = JSON.parse(store.get("shelf.feed") || "null");
   const fresh = cached && (Date.now() - cached.ts < 30*60*1000);
