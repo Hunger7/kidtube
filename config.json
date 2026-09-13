@@ -1,7 +1,9 @@
 {
   "apiKey": "AIzaSyC4r0pO2Tu2_gPEiNgmBoeeGImCyLpbDRU",
   "hideShorts": true,
+  "shortsMaxSeconds": 180,
   "maxPerChannel": 30,
+  "theme": "midnight",
   "channels": [
     {
       "id": "UCvsbkaHXLQY179t-8db8pzw",
@@ -14,6 +16,36 @@
       "title": "Shane Hummus",
       "thumb": "https://yt3.ggpht.com/Tg3J3l38zTlpSMmFXlEvOThBPyiRo1ipdxRs33bwaihXHrGHFD9tCPiUKR9IZFTh1i323DN5=s88-c-k-c0x00ffffff-no-rj",
       "uploads": "UULKZ20yD2tNMBOkSDZo4FeQ"
+    },
+    {
+      "id": "UCU_W0oE_ock8bWKjALiGs8Q",
+      "title": "Charisma on Command",
+      "thumb": "https://yt3.ggpht.com/ytc/AIdro_lYUhlLFHomfjk1gsjbyx8cOrgHazksmYxNnmMXyrv9W0g=s88-c-k-c0x00ffffff-no-rj",
+      "uploads": "UUU_W0oE_ock8bWKjALiGs8Q"
+    },
+    {
+      "id": "UCJ24N4O0bP7LGLBDvye7oCA",
+      "title": "Matt D'Avella",
+      "thumb": "https://yt3.ggpht.com/Ldpkcur-En5Qn8rcowaWiU6xbNt_yMrs1mAVcSRBIOdq0tSyTmGGIALRcgfm1a8aGKgYiYDEIQ=s88-c-k-c0x00ffffff-no-rj",
+      "uploads": "UUJ24N4O0bP7LGLBDvye7oCA"
+    },
+    {
+      "id": "UCzpl_gT1bVB1iNZl9yQbWuA",
+      "title": "Sharran Srivatsaa",
+      "thumb": "https://yt3.ggpht.com/7DScUqufSh-cZSgZrsxPR6Mf6g2uAX3SfqwOwLqMAcwjniU4ZmN8XpLKhOwf2xPT5Aku_HtMzQ=s88-c-k-c0x00ffffff-no-rj",
+      "uploads": "UUzpl_gT1bVB1iNZl9yQbWuA"
+    },
+    {
+      "id": "UChhw6DlKKTQ9mYSpTfXUYqA",
+      "title": "Starter Story",
+      "thumb": "https://yt3.ggpht.com/FbXXhP5yCeqnwGyq6X10dcS7I-_C2BHslNRpLSIRZ5RqzvNdG9X7l8znHQ7fKcXxfGkjpzDMlg=s88-c-k-c0x00ffffff-no-rj",
+      "uploads": "UUhhw6DlKKTQ9mYSpTfXUYqA"
+    },
+    {
+      "id": "UCPa0bvFsR1mbBpk5mIPFGLA",
+      "title": "Vincent Chan",
+      "thumb": "https://yt3.ggpht.com/0xC6gHMfwgPUcgYpHrs9AQYCF0KRS6zKWnsIsGiemgBplOVXWi_tmtzgTHtzsdm09hAKE4pyIUo=s88-c-k-c0x00ffffff-no-rj",
+      "uploads": "UUPa0bvFsR1mbBpk5mIPFGLA"
     }
   ]
 }
