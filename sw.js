@@ -1,4 +1,4 @@
-const SHELL = "shelf-shell-v6";
+const SHELL = "shelf-shell-v7";
 const FILES = ["./", "./index.html", "./manifest.webmanifest", "./icon.svg"];
 
 self.addEventListener("install", e => {

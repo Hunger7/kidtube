@@ -271,7 +271,7 @@ async function loadConfig(){
   const c = await r.json();
   if (!c.apiKey || c.apiKey === "PASTE_YOUR_KEY_HERE") throw new Error("config.json has no API key yet.");
   if (!Array.isArray(c.channels) || !c.channels.length) throw new Error("config.json has no channels yet.");
-  return Object.assign({hideShorts:true, maxPerChannel:12, shortsMaxSeconds:180, theme:"midnight", appName:APP_NAME}, c);
+  return Object.assign({hideShorts:true, maxPerChannel:12, shortsMaxSeconds:180, theme:"midnight", appName:APP_NAME, playerHost:"nocookie"}, c);
 }
 const mem = {};
 const store = {
@@ -474,7 +474,12 @@ function play(v){
   if (player && player.loadVideoById) player.loadVideoById(v.vid);
   else player = new YT.Player("yt", {
     videoId: v.vid,
-    host: "https://www.youtube.com",
+    // "nocookie" serves embeds only, so it can be allowed in Family Link without
+    // opening browsable YouTube. It also sends no session cookie, so a Premium
+    // subscription does not apply and ads play. "youtube" is the reverse trade.
+    host: cfg.playerHost === "youtube"
+      ? "https://www.youtube.com"
+      : "https://www.youtube-nocookie.com",
     playerVars: {
       controls:0, disablekb:1, fs:0, rel:0, iv_load_policy:3,
       modestbranding:1, playsinline:1, autoplay:1,
