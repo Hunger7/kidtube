@@ -31,6 +31,9 @@ li{display:flex;align-items:center;gap:11px;padding:9px 0;border-top:1px solid v
 li img{width:36px;height:36px;border-radius:50%;flex:0 0 auto}
 li span.n{flex:1 1 auto;font-size:15px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 li button{color:var(--muted);font-size:14px;padding:6px 8px}
+li button.mv{font-size:13px;padding:6px 7px;border-radius:7px;border:1px solid var(--hairline);line-height:1}
+li button.mv:disabled{opacity:.25}
+li button.mv:not(:disabled):hover{color:var(--paper);border-color:var(--paper)}
 .toggle{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:11px 0}
 .switch{width:50px;height:29px;border-radius:999px;background:var(--hairline);position:relative;flex:0 0 auto;transition:background .15s}
 .switch::after{content:"";position:absolute;top:3px;left:3px;width:23px;height:23px;border-radius:50%;background:var(--paper);transition:transform .15s}
@@ -50,6 +53,17 @@ code{color:var(--brass);font-family:ui-monospace,Menlo,monospace;font-size:13px}
 <p class="lede">This page only generates text. Nothing is saved to the site — you paste the result into config.json in your repository, and every device picks it up from there.</p>
 
 <fieldset>
+  <legend>Start from your current config</legend>
+  <p class="hint">Pulls the live config off the site, so you never retype channels after an update. If this page is open from a local file, paste the contents of config.json instead.</p>
+  <div class="row">
+    <button id="pull" style="flex:1 1 auto">Load from site</button>
+  </div>
+  <textarea id="inbox" placeholder="…or paste config.json here" spellcheck="false" style="min-height:96px;margin-top:8px"></textarea>
+  <div class="row" style="margin-top:8px"><button id="load" style="flex:1 1 auto">Load pasted config</button></div>
+  <p class="err" id="in-err"></p>
+</fieldset>
+
+<fieldset>
   <legend>API key</legend>
   <p class="hint">The same key the app uses. Needed here to turn handles into channel IDs.</p>
   <input type="text" id="key" placeholder="AIza…" autocomplete="off" spellcheck="false">
@@ -57,7 +71,7 @@ code{color:var(--brass);font-family:ui-monospace,Menlo,monospace;font-size:13px}
 
 <fieldset>
   <legend>Channels</legend>
-  <p class="hint">Handle, URL, or ID — one at a time.</p>
+  <p class="hint">Handle, URL, or ID — one at a time. Arrows set the order of the filter chips in the app.</p>
   <div class="row">
     <input type="text" id="chan-in" placeholder="@handle or channel URL" autocomplete="off" spellcheck="false">
     <button id="add">Add</button>
@@ -107,13 +121,14 @@ try { const s = JSON.parse(localStorage.getItem("shelf.admin")||"{}");
   if (s.theme) $("theme").value = s.theme;
   if (typeof s.hideShorts === "boolean") $("t-shorts").setAttribute("aria-pressed", String(s.hideShorts));
   channels = s.channels || [];
+  if (s.extras) extras = s.extras;
 } catch(e){}
 
 function persist(){
   try { localStorage.setItem("shelf.admin", JSON.stringify({
     apiKey:$("key").value.trim(), per:$("per").value, smax:$("smax").value,
     theme:$("theme").value,
-    hideShorts:$("t-shorts").getAttribute("aria-pressed")==="true", channels
+    hideShorts:$("t-shorts").getAttribute("aria-pressed")==="true", channels, extras
   })); } catch(e){}
 }
 
@@ -148,26 +163,99 @@ async function lookup(raw, key){
 }
 
 function render(){
+  const n = channels.length;
   $("list").innerHTML = channels.map((c,i) =>
     `<li><img src="${esc(c.thumb)}" alt=""><span class="n">${esc(c.title)}</span>
+     <button class="mv" data-up="${i}" aria-label="Move up"${i===0?" disabled":""}>&#9650;</button>
+     <button class="mv" data-dn="${i}" aria-label="Move down"${i===n-1?" disabled":""}>&#9660;</button>
      <button data-rm="${i}">Remove</button></li>`).join("");
   $("list").querySelectorAll("[data-rm]").forEach(b => b.onclick = () => {
     channels.splice(+b.dataset.rm,1); render(); persist();
   });
+  $("list").querySelectorAll("[data-up]").forEach(b => b.onclick = () => move(+b.dataset.up, -1));
+  $("list").querySelectorAll("[data-dn]").forEach(b => b.onclick = () => move(+b.dataset.dn, 1));
   build();
 }
+function move(i, d){
+  const j = i + d;
+  if (j < 0 || j >= channels.length) return;
+  [channels[i], channels[j]] = [channels[j], channels[i]];
+  render(); persist();
+}
+
+/* Anything this page doesn't have a field for — appName, playerHost, whatever
+   gets added later — is carried through untouched instead of being dropped. */
+let extras = {};
+const KNOWN = ["apiKey","hideShorts","shortsMaxSeconds","maxPerChannel","theme","channels"];
+
+function adopt(text){
+  let c;
+  try { c = JSON.parse(text); }
+  catch(e){ throw new Error("That isn't valid JSON — copy the whole file, braces included."); }
+  if (!c || typeof c !== "object" || Array.isArray(c)) throw new Error("Expected a config object.");
+  if (!Array.isArray(c.channels)) throw new Error("No channels list in there.");
+  const bad = c.channels.filter(ch => !ch || !ch.id || !ch.uploads);
+  if (bad.length) throw new Error(bad.length + " channel entries are missing an id or uploads playlist.");
+
+  if (c.apiKey && c.apiKey !== "PASTE_YOUR_KEY_HERE") $("key").value = c.apiKey;
+  if (typeof c.hideShorts === "boolean") $("t-shorts").setAttribute("aria-pressed", String(c.hideShorts));
+  if (c.shortsMaxSeconds) $("smax").value = c.shortsMaxSeconds;
+  if (c.maxPerChannel) $("per").value = c.maxPerChannel;
+  if (c.theme) $("theme").value = c.theme;
+  channels = c.channels.map(ch => ({id:ch.id, title:ch.title || ch.id, thumb:ch.thumb || "", uploads:ch.uploads}));
+
+  extras = {};
+  Object.keys(c).forEach(k => { if (!KNOWN.includes(k)) extras[k] = c[k]; });
+
+  render(); persist();
+  return channels.length;
+}
+
+function report(fn){
+  const err = $("in-err");
+  err.textContent = "";
+  try {
+    const n = fn();
+    err.style.color = "var(--brass)";
+    err.textContent = "Loaded " + n + (n === 1 ? " channel." : " channels.");
+  } catch(e){
+    err.style.color = "var(--warn)";
+    err.textContent = e.message;
+  }
+}
+
+$("load").onclick = () => report(() => {
+  const t = $("inbox").value.trim();
+  if (!t) throw new Error("Paste the config first.");
+  return adopt(t);
+});
+
+$("pull").onclick = async () => {
+  const b = $("pull");
+  b.disabled = true; b.textContent = "…";
+  $("in-err").textContent = "";
+  try {
+    const r = await fetch("config.json?v=" + Date.now(), {cache:"no-store"});
+    if (!r.ok) throw new Error("Couldn't read config.json (" + r.status + ").");
+    const t = await r.text();
+    report(() => adopt(t));
+  } catch(e){
+    $("in-err").style.color = "var(--warn)";
+    $("in-err").textContent = e.message + " If this page is a local file, paste the config instead.";
+  }
+  b.disabled = false; b.textContent = "Load from site";
+};
 
 function build(){
   const per = Math.max(1, Math.min(30, parseInt($("per").value,10) || 12));
   const smax = Math.max(1, parseInt($("smax").value,10) || 180);
-  $("out").value = JSON.stringify({
+  $("out").value = JSON.stringify(Object.assign({
     apiKey: $("key").value.trim() || "PASTE_YOUR_KEY_HERE",
     hideShorts: $("t-shorts").getAttribute("aria-pressed") === "true",
     shortsMaxSeconds: smax,
     maxPerChannel: per,
-    theme: $("theme").value,
-    channels
-  }, null, 2);
+    theme: $("theme").value
+  }, extras, { channels }), null, 2);
 }
 
 $("add").onclick = async () => {
